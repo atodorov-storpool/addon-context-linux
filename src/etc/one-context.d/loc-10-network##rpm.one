@@ -117,9 +117,13 @@ EOT
 gen_iface6_conf() {
     cat <<EOT
 IPV6INIT=yes
-IPV6ADDR=$IPV6
+IPV6ADDR=$IP6/${IP6_PREFIX_LENGTH:-64}
 IPV6_AUTOCONF=no
 EOT
+
+    if [ -n "$IP6_ULA" ]; then
+        echo "IPV6ADDR_SECONDARIES=$IP6_ULA/64"
+    fi
 
     if [ -n "$MTU" ]; then
         echo "MTU=$MTU"
@@ -128,6 +132,7 @@ EOT
     if [ -n "$GATEWAY6" ]; then
         echo "IPV6_DEFAULTGW=$GATEWAY6"
     fi
+
 
     echo ""
 }
@@ -168,11 +173,13 @@ gen_network_configuration()
         MTU=$(get_mtu)
         GATEWAY=$(get_gateway)
 
-        IPV6=$(get_iface_var "IPV6")
-        [[ -z $IPV6 ]] && IPV6=$(get_iface_var "IP6")
+        IP6=$(get_iface_var "IP6")
+        [[ -z $IP6 ]] && IP6=$(get_iface_var "IPV6")
+        IP6_PREFIX_LENGTH=$(get_iface_var "IP6_PREFIX_LENGTH")
+        IP6_ULA=$(get_iface_var "IP6_ULA")
         GATEWAY6=$(get_gateway6)
 
-        [ -z "${IP}${IPV6}" ] && continue
+        [ -z "${IP}${IP6}" ] && continue
         [ -z "${DEV}" ] && continue
 
         (
@@ -184,7 +191,7 @@ NM_CONTROLLED=no
 TYPE=Ethernet
 EOT
             [[ -n $IP ]] && gen_iface_conf
-            [[ -n $IPV6 ]] && gen_iface6_conf
+            [[ -n $IP6 ]] && gen_iface6_conf
 
         ) > /etc/sysconfig/network-scripts/ifcfg-${DEV}
 
