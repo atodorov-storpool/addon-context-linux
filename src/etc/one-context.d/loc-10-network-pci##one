@@ -54,7 +54,9 @@ for pci in $PCI_INTERFACES; do
 
     MAC=$(get_iface_var "MAC")
     IP=$(get_iface_var "IP")
-    IPV6=$(get_iface_var "IP6")
+    IP6=$(get_iface_var "IP6")
+    IP6_PREFIX_LENGTH=$(get_iface_var "IP6_PREFIX_LENGTH")
+    IP6_ULA=$(get_iface_var "IP6_ULA")
     VLAN_ID=$(get_iface_var "VLAN_ID")
 
     ADDRESS=$(get_iface_var "ADDRESS")
@@ -72,6 +74,12 @@ for pci in $PCI_INTERFACES; do
         DEV=$DEV.$VLAN_ID
     fi
 
-    [ -n "$IP" ]  && ip address add $IP/24 dev $DEV
-    [ -n "$IPV6" ] && ip address add $IPV6  dev $DEV
+    [ -n "$IP" ] && ip address add $IP/24 dev $DEV
+
+    if [ -n "$IP6" ]; then
+        ip address add $IP6/${IP6_PREFIX_LENGTH:-64} dev $DEV
+        if [ -n "$IP6_ULA" ]; then
+            ip address add $IP6_ULA/64 dev $DEV
+        fi
+    fi
 done
